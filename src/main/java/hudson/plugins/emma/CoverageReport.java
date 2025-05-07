@@ -1,7 +1,6 @@
 package hudson.plugins.emma;
 
 import hudson.model.AbstractBuild;
-import hudson.util.IOException2;
 import org.apache.commons.digester3.Digester;
 import org.xml.sax.SAXException;
 
@@ -12,7 +11,7 @@ import java.io.InputStream;
 
 /**
  * Root object of the coverage report.
- * 
+ *
  * @author Kohsuke Kawaguchi
  */
 public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy*/,CoverageReport,PackageReport> {
@@ -29,7 +28,7 @@ public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy
           try {
             createDigester(!Boolean.getBoolean(this.getClass().getName() + ".UNSAFE")).parse(is);
           } catch (SAXException e) {
-              throw new IOException2("Failed to parse XML",e);
+              throw new IOException("Failed to parse XML",e);
           }
         }
         setParent(null);
@@ -40,7 +39,7 @@ public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy
         try {
             createDigester(!Boolean.getBoolean(this.getClass().getName() + ".UNSAFE")).parse(xmlReport);
         } catch (SAXException e) {
-            throw new IOException2("Failed to parse "+xmlReport,e);
+            throw new IOException("Failed to parse "+xmlReport,e);
         }
         setParent(null);
     }
@@ -115,15 +114,15 @@ public final class CoverageReport extends AggregatedReport<CoverageReport/*dummy
 ////////////////////////////////////////////////////////////////////////////////
 //  overridden interface implementation for the advanced setup support
 //
-//      root object for reporting 
+//      root object for reporting
 //          -> get config data from action object
 //              -> read from build.xml???
-    
+
     @Override
     public boolean getTestNotMandatory(){
        return action.getTestNotMandatory();
     }
-    
+
     @Override
     public String getFirstDataColumnDescriptor()
     {

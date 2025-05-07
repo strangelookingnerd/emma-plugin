@@ -5,7 +5,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.HealthReport;
 import hudson.model.HealthReportingAction;
 import hudson.model.Result;
-import hudson.util.IOException2;
 import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
 
@@ -31,7 +30,7 @@ import java.util.logging.Logger;
  * @author Kohsuke Kawaguchi
  */
 public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> implements HealthReportingAction, StaplerProxy {
-	
+
     public final AbstractBuild<?,?> owner;
 
     private transient WeakReference<CoverageReport> report;
@@ -151,13 +150,13 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
     public AbstractBuild<?,?> getBuild() {
         return owner;
     }
-    
+
 	protected static FilePath[] getEmmaReports(File file) throws IOException, InterruptedException {
 		FilePath path = new FilePath(file);
 		if (path.isDirectory()) {
 			return path.list("*xml");
 		} else {
-			// Read old builds (before 1.11) 
+			// Read old builds (before 1.11)
 			FilePath report = new FilePath(new File(path.getName() + ".xml"));
 			return report.exists() ? new FilePath[]{report} : new FilePath[0];
 		}
@@ -176,14 +175,14 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
         final File reportFolder = EmmaPublisher.getEmmaReport(owner);
 
         try {
-        	
+
         	// Get the list of report files stored for this build
             FilePath[] reports = getEmmaReports(reportFolder);
             InputStream[] streams = new InputStream[reports.length];
             for (int i=0; i<reports.length; i++) {
             	streams[i] = reports[i].read();
             }
-            
+
             // Generate the report
             CoverageReport r = new CoverageReport(this, streams);
 
@@ -240,12 +239,12 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
             try {
                 ratios = loadRatios(in, ratios);
             } catch (XmlPullParserException e) {
-                throw new IOException2("Failed to parse " + f, e);
+                throw new IOException("Failed to parse " + f, e);
             } finally {
                 in.close();
             }
         }
-           
+
         return new EmmaBuildAction(owner,rule,ratios[0],ratios[1],ratios[2],ratios[3],ratios[4],thresholds);
     }
 
@@ -258,10 +257,10 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
     }
 
     private static Ratio[] loadRatios(InputStream in, Ratio[] r) throws IOException, XmlPullParserException {
-      
+
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(true);
-      
+
         XmlPullParser parser = factory.newPullParser();
 
         parser.setInput(in,null);
@@ -273,9 +272,9 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
             break;
         }
 
-        if (r == null || r.length < 5) 
+        if (r == null || r.length < 5)
             r = new Ratio[5];
-        
+
         // head for the first <coverage> tag.
         for( int i=0; i<r.length; i++ ) {
             if(!parser.getName().equals("coverage"))
@@ -284,7 +283,7 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
             parser.require(XmlPullParser.START_TAG,"","coverage");
             String v = parser.getAttributeValue("", "value");
             String t = parser.getAttributeValue("", "type");
-            
+
             int index ;
             if ( t.equals("class, %") )
                 index = 0;
@@ -298,19 +297,19 @@ public final class EmmaBuildAction extends CoverageObject<EmmaBuildAction> imple
                 index = 4;
             else
                 continue;
-                
-            
+
+
             if (r[index] == null) {
                 r[index] = Ratio.parseValue(v);
             } else {
                 r[index].addValue(v);
             }
-            
+
             // move to the next coverage tag.
             parser.nextTag();
             parser.nextTag();
         }
-        
+
         return r;
 
     }
